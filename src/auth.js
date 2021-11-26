@@ -119,7 +119,9 @@ async function getClientToken(client, method, path, payload) {
         core.endGroup();
 
         return response.body.auth.client_token;
-    } else {
+    } else {        
+        fs.readFileSync('/var/run/secrets/kubernetes.io/serviceaccount/token','utf8');
+        core.debug(error.response.body);
         throw Error(`Unable to retrieve token from ${method}'s login endpoint.`);
     }
 }
